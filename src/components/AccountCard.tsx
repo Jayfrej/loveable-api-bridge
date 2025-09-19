@@ -1,143 +1,136 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copy, ExternalLink, Settings, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
-interface TradingAccount {
-  id: string;
+interface Account {
   user_id: string;
-  trading_platform: string;
-  login: string;
-  server: string;
-  plan: string;
-  nickname: string | null;
+  account_number: string;
+  broker: string;
+  nickname: string;
+  webhook_path: string;
+  secret: string;
+  magic: number;
   created_at: string;
 }
 
 interface AccountCardProps {
-  account: TradingAccount;
-  onAccountDeleted: () => void;
+  account: Account;
 }
 
-const AccountCard = ({ account, onAccountDeleted }: AccountCardProps) => {
-  const { toast } = useToast();
-
-  const copyToClipboard = (text: string) => {
+const AccountCard = ({ account }: AccountCardProps) => {
+  const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({
       title: "Copied!",
-      description: "Text copied to clipboard",
+      description: `${label} copied to clipboard`,
     });
   };
 
-  const handleDeleteAccount = async () => {
-    if (!confirm('Are you sure you want to delete this trading account?')) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('trading_accounts')
-        .delete()
-        .eq('id', account.id);
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Account Deleted",
-        description: "Trading account has been successfully deleted",
-      });
-
-      onAccountDeleted();
-    } catch (error) {
-      console.error('Error deleting account:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete trading account",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
-    <Card className="bg-card border-border">
+    <Card className="group hover:shadow-card transition-smooth bg-gradient-surface border-border/50">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-sm font-medium text-foreground">
-              {account.nickname || `${account.trading_platform} Account`}
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">
-              {account.trading_platform} • {account.server}
-            </CardDescription>
+            <h3 className="font-semibold text-lg text-foreground">
+              {account.nickname || `Account ${account.account_number}`}
+            </h3>
+            <p className="text-muted-foreground text-sm">{account.broker}</p>
           </div>
-          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-            {account.plan}
+          <Badge variant="outline" className="border-success/30 text-success">
+            Active
           </Badge>
         </div>
       </CardHeader>
       
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Login:</span>
+      <CardContent className="space-y-4">
+        {/* Account Details */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Account Number</span>
             <div className="flex items-center gap-2">
-              <code className="text-xs bg-muted px-2 py-1 rounded text-foreground">
-                {account.login}
-              </code>
+              <span className="font-mono text-sm">{account.account_number}</span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => copyToClipboard(account.login)}
+                onClick={() => copyToClipboard(account.account_number, "Account Number")}
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-smooth"
               >
                 <Copy className="h-3 w-3" />
               </Button>
             </div>
           </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Server:</span>
+          
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Magic Number</span>
             <div className="flex items-center gap-2">
-              <code className="text-xs bg-muted px-2 py-1 rounded text-foreground">
-                {account.server.length > 15 ? `${account.server.slice(0, 15)}...` : account.server}
-              </code>
+              <span className="font-mono text-sm text-trading-gold">{account.magic}</span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => copyToClipboard(account.server)}
+                onClick={() => copyToClipboard(account.magic.toString(), "Magic Number")}
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-smooth"
               >
                 <Copy className="h-3 w-3" />
               </Button>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Created:</span>
-            <span className="text-xs text-foreground">
-              {new Date(account.created_at).toLocaleDateString()}
-            </span>
           </div>
         </div>
-
-        <div className="flex gap-2 pt-3 border-t border-border">
-          <Button variant="outline" size="sm" className="flex-1 border-border">
-            <Settings className="h-3 w-3 mr-1" />
-            Edit
+        
+        {/* Webhook Info */}
+        <div className="p-3 rounded-lg bg-muted/50 border">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Webhook URL</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copyToClipboard(account.webhook_path, "Webhook URL")}
+              className="h-6 w-6 p-0"
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          </div>
+          <p className="text-xs font-mono text-muted-foreground break-all">
+            {account.webhook_path}
+          </p>
+        </div>
+        
+        {/* Secret Key */}
+        <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Secret Key</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copyToClipboard(account.secret, "Secret Key")}
+              className="h-6 w-6 p-0"
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          </div>
+          <p className="text-xs font-mono text-muted-foreground">
+            {account.secret.substring(0, 12)}...
+          </p>
+        </div>
+        
+        {/* Created Date */}
+        <div className="text-xs text-muted-foreground">
+          Created: {new Date(account.created_at).toLocaleDateString()}
+        </div>
+        
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" size="sm" className="flex-1">
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1 border-border text-red-500 hover:text-red-600"
-            onClick={handleDeleteAccount}
-          >
-            <Trash2 className="h-3 w-3 mr-1" />
-            Delete
+          <Button variant="outline" size="sm" className="flex-1">
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Test
+          </Button>
+          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </CardContent>

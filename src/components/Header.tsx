@@ -1,28 +1,14 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { TrendingUp, Settings, User, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Settings, User, Bell } from "lucide-react";
 
-const Header = ({ onOpenRegister }: { onOpenRegister: () => void }) => {
-  const { user, signOut } = useAuth();
-  const { toast } = useToast();
+interface HeaderProps {
+  onOpenRegister: () => void;
+}
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+const Header = ({ onOpenRegister }: HeaderProps) => {
+  const [notifications] = useState(2);
 
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -53,33 +39,26 @@ const Header = ({ onOpenRegister }: { onOpenRegister: () => void }) => {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <>
-                <span className="text-sm text-muted-foreground">
-                  {user.email}
-                </span>
-                <Button 
-                  onClick={onOpenRegister}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  + เพิ่มบัญชี
-                </Button>
-                <Button 
-                  onClick={handleSignOut}
-                  variant="outline"
-                >
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <Button 
-                onClick={() => window.location.href = '/auth'}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                Sign In
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="w-4 h-4" />
+                {notifications > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center bg-destructive">
+                    {notifications}
+                  </Badge>
+                )}
               </Button>
-            )}
+            </div>
+            
+            <Button variant="ghost" size="sm">
+              <Settings className="w-4 h-4" />
+            </Button>
+            
+            <Button onClick={onOpenRegister} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-gold">
+              <User className="w-4 h-4 mr-2" />
+              Register Account
+            </Button>
           </div>
         </div>
       </div>

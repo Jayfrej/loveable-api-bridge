@@ -4,82 +4,87 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { Loader2, Plus } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface RegisterDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onAccountRegistered: () => void;
+  apiBaseUrl: string;
 }
 
-const RegisterDialog = ({ isOpen, onClose, onAccountRegistered }: RegisterDialogProps) => {
-  const { user } = useAuth();
-  const { toast } = useToast();
+const RegisterDialog = ({ isOpen, onClose, onAccountRegistered, apiBaseUrl }: RegisterDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    trading_platform: "",
-    login: "",
-    password: "",
-    server: "",
-    plan: "",
+    user_id: "",
+    account_number: "",
+    broker: "",
     nickname: ""
   });
+
+  const brokers = [
+    "MetaTrader 5",
+    "MetaTrader 4", 
+    "XM Global",
+    "FXCM",
+    "IG Markets",
+    "Plus500",
+    "eToro",
+    "Interactive Brokers",
+    "TD Ameritrade",
+    "Other"
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
+    if (!formData.user_id || !formData.account_number || !formData.broker) {
       toast({
         title: "Error",
-        description: "You must be logged in to add a trading account",
-        variant: "destructive",
+        description: "Please fill in all required fields",
+        variant: "destructive"
       });
       return;
     }
 
     setIsLoading(true);
-
+    
     try {
-      const { error } = await supabase
-        .from('trading_accounts')
-        .insert({
-          user_id: user.id,
-          trading_platform: formData.trading_platform,
-          login: formData.login,
-          password: formData.password,
-          server: formData.server,
-          plan: formData.plan,
-          nickname: formData.nickname || `${formData.trading_platform} Account`
+      const response = await fetch(`${apiBaseUrl}/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Success!",
+          description: "Account registered successfully",
         });
-
-      if (error) {
-        throw error;
+        
+        // Reset form
+        setFormData({
+          user_id: "",
+          account_number: "",
+          broker: "",
+          nickname: ""
+        });
+        
+        onAccountRegistered();
+        onClose();
+      } else {
+        throw new Error(data.error || "Registration failed");
       }
-
-      toast({
-        title: "สำเร็จ!",
-        description: "เพิ่มบัญชีการซื้อขายเรียบร้อยแล้ว",
-      });
-      
-      setFormData({
-        trading_platform: "",
-        login: "",
-        password: "",
-        server: "",
-        plan: "",
-        nickname: ""
-      });
-      
-      onAccountRegistered();
-      onClose();
     } catch (error) {
-      console.error('Error adding trading account:', error);
       toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถเพิ่มบัญชีได้ กรุณาลองใหม่อีกครั้ง",
-        variant: "destructive",
+        title: "Registration Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -90,87 +95,62 @@ const RegisterDialog = ({ isOpen, onClose, onAccountRegistered }: RegisterDialog
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">
-            เพิ่มบัญชีการซื้อขาย
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="w-5 h-5 text-primary" />
+            Register Trading Account
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="trading_platform">Trading Platform</Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, trading_platform: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="เลือก Platform" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MetaTrader 4">MetaTrader 4</SelectItem>
-                  <SelectItem value="MetaTrader 5">MetaTrader 5</SelectItem>
-                  <SelectItem value="cTrader">cTrader</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="login">Login</Label>
-              <Input
-                id="login"
-                value={formData.login}
-                onChange={(e) => setFormData({ ...formData, login: e.target.value })}
-                required
-                placeholder="Account login"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="user_id">User ID *</Label>
+            <Input
+              id="user_id"
+              placeholder="Enter your user ID"
+              value={formData.user_id}
+              onChange={(e) => setFormData({...formData, user_id: e.target.value})}
+              className="bg-input border-border"
+            />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-                placeholder="Account password"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="server">Server</Label>
-              <Input
-                id="server"
-                value={formData.server}
-                onChange={(e) => setFormData({ ...formData, server: e.target.value })}
-                required
-                placeholder="Server address"
-              />
-            </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="account_number">Account Number *</Label>
+            <Input
+              id="account_number"
+              placeholder="Enter MT4/MT5 account number"
+              value={formData.account_number}
+              onChange={(e) => setFormData({...formData, account_number: e.target.value})}
+              className="bg-input border-border"
+            />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="plan">Plan</Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, plan: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="เลือกแผน" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Basic">Basic</SelectItem>
-                  <SelectItem value="Premium">Premium</SelectItem>
-                  <SelectItem value="Pro">Pro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nickname">Nickname (Optional)</Label>
-              <Input
-                id="nickname"
-                value={formData.nickname}
-                onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                placeholder="ชื่อเล่นสำหรับบัญชี"
-              />
-            </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="broker">Broker *</Label>
+            <Select onValueChange={(value) => setFormData({...formData, broker: value})}>
+              <SelectTrigger className="bg-input border-border">
+                <SelectValue placeholder="Select your broker" />
+              </SelectTrigger>
+              <SelectContent>
+                {brokers.map((broker) => (
+                  <SelectItem key={broker} value={broker}>
+                    {broker}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
+          
+          <div className="space-y-2">
+            <Label htmlFor="nickname">Nickname (Optional)</Label>
+            <Input
+              id="nickname"
+              placeholder="Give your account a name"
+              value={formData.nickname}
+              onChange={(e) => setFormData({...formData, nickname: e.target.value})}
+              className="bg-input border-border"
+            />
+          </div>
+          
           <div className="flex gap-3 pt-4">
             <Button 
               type="button" 
@@ -183,10 +163,20 @@ const RegisterDialog = ({ isOpen, onClose, onAccountRegistered }: RegisterDialog
             </Button>
             <Button 
               type="submit" 
-              className="flex-1 bg-primary hover:bg-primary/90"
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={isLoading}
             >
-              {isLoading ? "Adding..." : "Add Account"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Register Account
+                </>
+              )}
             </Button>
           </div>
         </form>
