@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          login: string
+          magic: number | null
+          nickname: string | null
+          password: string
+          plan: string
+          secret: string | null
+          server: string
+          trading_platform: string
+          updated_at: string
+          user_id: string
+          webhook_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          login: string
+          magic?: number | null
+          nickname?: string | null
+          password: string
+          plan: string
+          secret?: string | null
+          server: string
+          trading_platform: string
+          updated_at?: string
+          user_id: string
+          webhook_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          login?: string
+          magic?: number | null
+          nickname?: string | null
+          password?: string
+          plan?: string
+          secret?: string | null
+          server?: string
+          trading_platform?: string
+          updated_at?: string
+          user_id?: string
+          webhook_path?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

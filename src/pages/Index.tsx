@@ -56,7 +56,6 @@ const Index = () => {
               <ScrollArea className="h-full">
                 <Dashboard 
                   key={refreshKey}
-                  apiBaseUrl={apiBaseUrl} 
                   onOpenRegister={handleOpenRegister}
                 />
               </ScrollArea>
@@ -96,7 +95,6 @@ const Index = () => {
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
         onAccountRegistered={handleAccountRegistered}
-        apiBaseUrl={apiBaseUrl}
       />
     </div>
   );
